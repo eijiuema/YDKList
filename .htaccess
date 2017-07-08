@@ -1,0 +1,2 @@
+RewriteEngine on
+RewriteRule !^YDKList($|/) https://eijiuema.github.io%{REQUEST_URI} [L,R=301]
