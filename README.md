@@ -5,7 +5,6 @@ YDKList parses YDK files and searches on third-party databases (<a href="http://
 A demo is available on: <a href="http://uema.esy.es/YDKList/" target="_blank">http://uema.esy.es/YDKList/</a>.
 
 You can use this YDK file as example:
-
 ```
 #created by ygopro2
 #main
