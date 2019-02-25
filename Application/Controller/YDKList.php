@@ -23,7 +23,7 @@ class YDKList {
 		$urls = [];
 
 		foreach($this->cards as $key => $card) {
-			$urls[$key] = "http://yugioh.wikia.com/api/v1/Search/List/?query=". urlencode($card->serial) . "&limit=1";
+			$urls[$key] = "https://yugioh.fandom.com/api/v1/Search/List/?query=". urlencode($card->serial) . "&limit=1";
 		}
 
 		return $urls;
@@ -34,7 +34,7 @@ class YDKList {
 
 		foreach($this->cards as $key => $card) {
 			if(isset($card->pack->name)) {
-				$urls[$key] = "http://yugioh.wikia.com/api/v1/Search/List/?query=" . urlencode($card->pack->name) . "&limit=1";
+				$urls[$key] = "https://yugioh.fandom.com/api/v1/Search/List/?query=" . urlencode($card->pack->name) . "&limit=1";
 			}
 		}
 
@@ -45,7 +45,7 @@ class YDKList {
 		$urls = [];
 
 		foreach($this->cards as $key => $card) {
-			$urls[$key] = "http://yugiohprices.com/api/get_card_prices/" . urlencode($card->name);
+			$urls[$key] = "https://yugiohprices.com/api/get_card_prices/" . urlencode($card->name);
 		}
 
 		return $urls;
@@ -58,8 +58,8 @@ class YDKList {
 		if(isset($this->cards[$key])) {
 			$this->cards[$key]->name = $name;
 			$this->cards[$key]->wiki = $wiki;
-			$this->cards[$key]->image = "http://yugiohprices.com/api/card_image/" . urlencode($name);
-			$this->cards[$key]->yugioh_prices = "http://yugiohprices.com/card_price?name=" . urlencode($name);
+			$this->cards[$key]->image = "https://yugiohprices.com/api/card_image/" . urlencode($name);
+			$this->cards[$key]->yugioh_prices = "https://yugiohprices.com/card_price?name=" . urlencode($name);
 		}
 	}
 
@@ -69,7 +69,9 @@ class YDKList {
 		} else {
 			return;
 		}
-	
+
+		$prints = [];
+
 		foreach($data as $dataa)
 		{
 			if(isset($dataa->price_data->data->prices->average))
@@ -83,7 +85,7 @@ class YDKList {
 				if($a->price_data->data->prices->average == $b->price_data->data->prices->average) {
 					return 0;
 				}
-	
+
 				return $a->price_data->data->prices->average < $b->price_data->data->prices->average ? -1 : 1;
 			});
 
@@ -99,10 +101,10 @@ class YDKList {
 	}
 
 	function rolling_curl($urls, $callback, $custom_options = null) {
-	
+
 		// make sure the rolling window isn't greater than the # of urls
 		$rolling_window = count($urls);
-	
+
 		$master = curl_multi_init();
 		$curl_arr = array();
 		// add additional curl options here
@@ -110,7 +112,7 @@ class YDKList {
 			CURLOPT_RETURNTRANSFER => true,
 		];
 		$options = ($custom_options) ? ($std_options + $custom_options) : $std_options;
-	
+
 		// start the first batch of requests
 		for ($i = 0; $i < $rolling_window; $i++) {
 			$ch = curl_init();
@@ -121,7 +123,7 @@ class YDKList {
 				curl_multi_add_handle($master, $ch);
 			}
 		}
-	
+
 		do {
 			while(($execrun = curl_multi_exec($master, $running)) == CURLM_CALL_MULTI_PERFORM);
 			if($execrun != CURLM_OK)
@@ -129,9 +131,9 @@ class YDKList {
 			// a request was just completed -- find out which one
 			while($done = curl_multi_info_read($master)) {
 				$info = curl_getinfo($done['handle']);
-				if ($info['http_code'] == 200)  {
+				if ($info['http_code'] == 200 || $info['http_code'] == 301)  {
 					$output = curl_multi_getcontent($done['handle']);
-	
+
 					// request successful.  process output using the callback function.
 					switch($callback) {
 						case 'name':
@@ -156,11 +158,11 @@ class YDKList {
 					// remove the curl handle that just completed
 					curl_multi_remove_handle($master, $done['handle']);
 				} else {
-
+					// should throw an error
 				}
 			}
 		} while ($running);
-		
+
 		curl_multi_close($master);
 
 		return true;
